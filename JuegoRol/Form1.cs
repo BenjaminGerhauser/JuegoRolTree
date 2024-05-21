@@ -1,4 +1,7 @@
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
+using System.Net;
+
 namespace JuegoRol
 {
     public partial class Form1 : Form
@@ -12,6 +15,7 @@ namespace JuegoRol
             clsConexion con = new clsConexion();
         private void Form1_Load(object sender, EventArgs e)
         {
+            
             con.cargar(treeView1, "SELECT type FROM monstruario GROUP BY type");
             //treeViewX = new TreeView();
 
@@ -40,7 +44,9 @@ namespace JuegoRol
         private void treeView1_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             con.caracteristicas(dataGridView1, e.Node.Text);
-
+            JObject atributesMonster = con.api(e.Node.Text);
+            string urlImage = con.leerApi(atributesMonster);
+            if (urlImage != "") pictureBox1.ImageLocation = $"https://www.dnd5eapi.co{urlImage}";
         }
     }
 }

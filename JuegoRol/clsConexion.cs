@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using System.Data;
-
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 namespace JuegoRol
 {
     internal class clsConexion
@@ -23,17 +26,25 @@ namespace JuegoRol
             ada.Fill(tabla);
             return tabla;
         }
+
         public void cargar(TreeView tree,string sql)
         {
-            tree.Nodes.Clear();
-            tabla = consultar(sql);
-            TreeNode nodoRaiz = tree.Nodes.Add("Types");
-            foreach (DataRow r in tabla.Rows)
+            try
             {
-                TreeNode nodoHijo = nodoRaiz.Nodes.Add(r["type"].ToString());
-                string type = r["type"].ToString();
-                nombre(nodoHijo, type);
+                tree.Nodes.Clear();
+                tabla = consultar(sql);
+                TreeNode nodoRaiz = tree.Nodes.Add("Types");
+                foreach (DataRow r in tabla.Rows)
+                {
+                    TreeNode nodoHijo = nodoRaiz.Nodes.Add(r["type"].ToString());
+                    string type = r["type"].ToString();
+                    nombre(nodoHijo, type);
 
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
             }
         }
         private void nombre(TreeNode nodoPadre,string type)
@@ -43,7 +54,7 @@ namespace JuegoRol
             foreach (DataRow r in tabla.Rows)
             {
                 nodoPadre.Nodes.Add(r["name"].ToString());
-                caract(nodoPadre, r["name"].ToString());
+                //caract(nodoPadre, r["name"].ToString());
             }
 
         }
@@ -67,9 +78,49 @@ namespace JuegoRol
         }
         public void caracteristicas(DataGridView grilla, string nombre)
         {
-            string sql = $"SELECT * FROM monstruario WHERE name = '{nombre}'";
+            string sql = $"SELECT size,hit_points,strength,dexterity,constitution,intelligence,wisdom,charisma,xp FROM monstruario WHERE name = '{nombre}'";
             tabla = consultar(sql);
             grilla.DataSource = tabla;
+        }
+        public JObject api(string mounstruo)
+        {
+            try
+            {
+                DataTable TApi = consultar($"SELECT url FROM monstruario WHERE name = '{mounstruo}'");
+                string urlApi = TApi.Rows[0]["url"].ToString();
+                using (var client = new HttpClient())
+                {
+                    string url = $"https://www.dnd5eapi.co{urlApi}";
+                    client.DefaultRequestHeaders.Clear();
+                    var respuesta = client.GetAsync(url).Result;
+                    var res = respuesta.Content.ReadAsStringAsync().Result;
+                    dynamic r = JObject.Parse(res);
+                    string atributesMonster = res;
+                    JObject jsonAtributes = JObject.Parse(res);
+                    return jsonAtributes;
+                    //MessageBox.Show(res);
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return null;
+            }
+        }
+        public string leerApi(JObject atributesMonster) 
+        {
+            try
+            {
+                //string atributes = JsonConvert.DeserializeObject(atributesMonster).ToString();
+                string urlImage = (string)atributesMonster["image"];
+                //MessageBox.Show(urlImage);
+                return urlImage;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return "";
+            }
         }
     }
 }

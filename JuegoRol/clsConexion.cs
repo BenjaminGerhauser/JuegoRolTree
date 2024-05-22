@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using Mysqlx.Crud;
 namespace JuegoRol
 {
     internal class clsConexion
@@ -19,7 +20,7 @@ namespace JuegoRol
         MySqlDataAdapter ada;
         MySqlCommand com;
 
-        private DataTable consultar(string sql)
+        public DataTable consultar(string sql)
         {
             tabla = new DataTable();
             ada = new MySqlDataAdapter(sql,con);
@@ -121,6 +122,35 @@ namespace JuegoRol
                 MessageBox.Show(e.Message);
                 return "";
             }
+        }
+        public void cargarJugador(List<string> datosJugador)
+        {
+            
+            //INSERT INTO `jugador` (`nombre`, `ataque`, `imagen`, `tipo`) VALUES('ogro', 'martillazo', '.....', 'ogro');
+            //ada = new MySqlDataAdapter(sql, con);
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection("Server=localhost;Database=juegorol;Uid=root;Pwd=;"))
+                {
+                    string nombre = datosJugador[0];
+                    string ataque = datosJugador[1];
+                    string imagen = datosJugador[2];
+                    string tipo = datosJugador[3];
+                    conn.Open();
+
+                    string sql = $@"INSERT INTO `jugador` (`nombre`, `ataque`, `imagen`, `tipo`)
+                            VALUES ('{nombre}', '{ataque}','{imagen}', '{tipo}');";
+                    MySqlCommand cmd = new MySqlCommand(sql, conn);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error: {0}", ex.Message);
+            }
+
         }
     }
 }
